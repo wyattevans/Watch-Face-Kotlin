@@ -1,0 +1,2 @@
+rootProject.name='Watch-Face-Kotlin'
+include ':app'
