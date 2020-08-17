@@ -26,15 +26,8 @@ import java.lang.ref.WeakReference
 import java.util.Calendar
 import java.util.TimeZone
 
-/**
- * Updates rate in milliseconds for interactive mode. We update once a second to advance the
- * second hand.
- */
 private const val INTERACTIVE_UPDATE_RATE_MS = 1000
 
-/**
- * Handler message id for updating the time periodically in interactive mode.
- */
 private const val MSG_UPDATE_TIME = 0
 
 private const val HOUR_STROKE_WIDTH = 5f
@@ -45,19 +38,6 @@ private const val CENTER_GAP_AND_CIRCLE_RADIUS = 4f
 
 private const val SHADOW_RADIUS = 6f
 
-/**
- * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't
- * shown. On devices with low-bit ambient mode, the hands are drawn without anti-aliasing in ambient
- * mode. The watch face is drawn with less contrast in mute mode.
- *
- *
- * Important Note: Because watch face apps do not have a default Activity in
- * their project, you will need to set your Configurations to
- * "Do not launch Activity" for both the Wear and/or Application modules. If you
- * are unsure how to do this, please review the "Run Starter project" section
- * in the Google Watch Face Code Lab:
- * https://codelabs.developers.google.com/codelabs/watchface/index.html#0
- */
 class MyWatchFace : CanvasWatchFaceService() {
 
     override fun onCreateEngine(): Engine {
@@ -90,7 +70,6 @@ class MyWatchFace : CanvasWatchFaceService() {
         private var sMinuteHandLength: Float = 0F
         private var sHourHandLength: Float = 0F
 
-        /* Colors for all hands (hour, minute, seconds, ticks) based on photo loaded. */
         private var mWatchHandColor: Int = 0
         private var mWatchHandHighlightColor: Int = 0
         private var mWatchHandShadowColor: Int = 0
@@ -108,7 +87,6 @@ class MyWatchFace : CanvasWatchFaceService() {
         private var mLowBitAmbient: Boolean = false
         private var mBurnInProtection: Boolean = false
 
-        /* Handler to update the time once a second in interactive mode. */
         private val mUpdateTimeHandler = EngineHandler(this)
 
         private val mTimeZoneReceiver = object : BroadcastReceiver() {
@@ -137,7 +115,6 @@ class MyWatchFace : CanvasWatchFaceService() {
             }
             mBackgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.bg)
 
-            /* Extracts colors from background image to improve watchface style. */
             Palette.from(mBackgroundBitmap).generate {
                 it?.let {
                     mWatchHandHighlightColor = it.getVibrantColor(Color.RED)
@@ -149,7 +126,6 @@ class MyWatchFace : CanvasWatchFaceService() {
         }
 
         private fun initializeWatchFace() {
-            /* Set defaults for colors */
             mWatchHandColor = Color.WHITE
             mWatchHandHighlightColor = Color.RED
             mWatchHandShadowColor = Color.BLACK
@@ -215,8 +191,6 @@ class MyWatchFace : CanvasWatchFaceService() {
 
             updateWatchHandStyle()
 
-            // Check and trigger whether or not timer should be running (only
-            // in active mode).
             updateTimer()
         }
 
@@ -263,7 +237,6 @@ class MyWatchFace : CanvasWatchFaceService() {
             super.onInterruptionFilterChanged(interruptionFilter)
             val inMuteMode = interruptionFilter == WatchFaceService.INTERRUPTION_FILTER_NONE
 
-            /* Dim display in mute mode. */
             if (mMuteMode != inMuteMode) {
                 mMuteMode = inMuteMode
                 mHourPaint.alpha = if (inMuteMode) 100 else 255
@@ -276,39 +249,19 @@ class MyWatchFace : CanvasWatchFaceService() {
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
             super.onSurfaceChanged(holder, format, width, height)
 
-            /*
-             * Find the coordinates of the center point on the screen, and ignore the window
-             * insets, so that, on round watches with a "chin", the watch face is centered on the
-             * entire screen, not just the usable portion.
-             */
             mCenterX = width / 2f
             mCenterY = height / 2f
 
-            /*
-             * Calculate lengths of different hands based on watch screen size.
-             */
             mSecondHandLength = (mCenterX * 0.875).toFloat()
             sMinuteHandLength = (mCenterX * 0.75).toFloat()
             sHourHandLength = (mCenterX * 0.5).toFloat()
 
-
-            /* Scale loaded background image (more efficient) if surface dimensions change. */
             val scale = width.toFloat() / mBackgroundBitmap.width.toFloat()
 
             mBackgroundBitmap = Bitmap.createScaledBitmap(mBackgroundBitmap,
                     (mBackgroundBitmap.width * scale).toInt(),
                     (mBackgroundBitmap.height * scale).toInt(), true)
 
-            /*
-             * Create a gray version of the image only if it will look nice on the device in
-             * ambient mode. That means we don't want devices that support burn-in
-             * protection (slight movements in pixels, not great for images going all the way to
-             * edges) and low ambient mode (degrades image quality).
-             *
-             * Also, if your watch face will know about all images ahead of time (users aren't
-             * selecting their own photos for the watch face), it will be more
-             * efficient to create a black/white version (png, etc.) and load that when you need it.
-             */
             if (!mBurnInProtection && !mLowBitAmbient) {
                 initGrayBackgroundBitmap()
             }
@@ -328,21 +281,13 @@ class MyWatchFace : CanvasWatchFaceService() {
             canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, grayPaint)
         }
 
-        /**
-         * Captures tap event (and tap type). The [WatchFaceService.TAP_TYPE_TAP] case can be
-         * used for implementing specific logic to handle the gesture.
-         */
         override fun onTapCommand(tapType: Int, x: Int, y: Int, eventTime: Long) {
             when (tapType) {
                 WatchFaceService.TAP_TYPE_TOUCH -> {
-                    // The user has started touching the screen.
                 }
                 WatchFaceService.TAP_TYPE_TOUCH_CANCEL -> {
-                    // The user has started a different gesture or otherwise cancelled the tap.
                 }
                 WatchFaceService.TAP_TYPE_TAP ->
-                    // The user has completed the tap gesture.
-                    // TODO: Add code to handle the tap gesture.
                     Toast.makeText(applicationContext, R.string.message, Toast.LENGTH_SHORT)
                             .show()
             }
@@ -371,11 +316,6 @@ class MyWatchFace : CanvasWatchFaceService() {
 
         private fun drawWatchFace(canvas: Canvas) {
 
-            /*
-             * Draw ticks. Usually you will want to bake this directly into the photo, but in
-             * cases where you want to allow users to select their own photos, this dynamically
-             * creates them on top of the photo.
-             */
             val innerTickRadius = mCenterX - 10
             val outerTickRadius = mCenterX
             for (tickIndex in 0..11) {
@@ -388,10 +328,6 @@ class MyWatchFace : CanvasWatchFaceService() {
                         mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint)
             }
 
-            /*
-             * These calculations reflect the rotation in degrees per unit of time, e.g.,
-             * 360 / 60 = 6 and 360 / 12 = 30.
-             */
             val seconds =
                     mCalendar.get(Calendar.SECOND) + mCalendar.get(Calendar.MILLISECOND) / 1000f
             val secondsRotation = seconds * 6f
@@ -401,9 +337,6 @@ class MyWatchFace : CanvasWatchFaceService() {
             val hourHandOffset = mCalendar.get(Calendar.MINUTE) / 2f
             val hoursRotation = mCalendar.get(Calendar.HOUR) * 30 + hourHandOffset
 
-            /*
-             * Save the canvas state before we can begin to rotate it.
-             */
             canvas.save()
 
             canvas.rotate(hoursRotation, mCenterX, mCenterY)
@@ -422,10 +355,6 @@ class MyWatchFace : CanvasWatchFaceService() {
                     mCenterY - sMinuteHandLength,
                     mMinutePaint)
 
-            /*
-             * Ensure the "seconds" hand is drawn only when we are in interactive mode.
-             * Otherwise, we only update the watch face once a minute.
-             */
             if (!mAmbient) {
                 canvas.rotate(secondsRotation - minutesRotation, mCenterX, mCenterY)
                 canvas.drawLine(
@@ -442,7 +371,6 @@ class MyWatchFace : CanvasWatchFaceService() {
                     CENTER_GAP_AND_CIRCLE_RADIUS,
                     mTickAndCirclePaint)
 
-            /* Restore the canvas' original orientation. */
             canvas.restore()
         }
 
@@ -451,14 +379,12 @@ class MyWatchFace : CanvasWatchFaceService() {
 
             if (visible) {
                 registerReceiver()
-                /* Update time zone in case it changed while we weren't visible. */
                 mCalendar.timeZone = TimeZone.getDefault()
                 invalidate()
             } else {
                 unregisterReceiver()
             }
 
-            /* Check and trigger whether or not timer should be running (only in active mode). */
             updateTimer()
         }
 
@@ -479,9 +405,6 @@ class MyWatchFace : CanvasWatchFaceService() {
             this@MyWatchFace.unregisterReceiver(mTimeZoneReceiver)
         }
 
-        /**
-         * Starts/stops the [.mUpdateTimeHandler] timer based on the state of the watch face.
-         */
         private fun updateTimer() {
             mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME)
             if (shouldTimerBeRunning()) {
@@ -489,17 +412,10 @@ class MyWatchFace : CanvasWatchFaceService() {
             }
         }
 
-        /**
-         * Returns whether the [.mUpdateTimeHandler] timer should be running. The timer
-         * should only run in active mode.
-         */
         private fun shouldTimerBeRunning(): Boolean {
             return isVisible && !mAmbient
         }
 
-        /**
-         * Handle updating the time periodically in interactive mode.
-         */
         fun handleUpdateTimeMessage() {
             invalidate()
             if (shouldTimerBeRunning()) {
